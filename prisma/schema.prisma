@@ -1,0 +1,98 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String    @id @default(uuid())
+  googleId      String?   @unique
+  email         String    @unique
+  name          String?
+  picture       String?
+  role          String    @default("Vendedor")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  contacts      Contact[]
+  companies     Company[]
+  deals         Deal[]
+  activities    Activity[]
+}
+
+model Contact {
+  id            String    @id @default(uuid())
+  name          String
+  email         String?
+  phone         String?
+  whatsapp      String?
+  role          String?
+  stage         String    @default("Lead")
+  source        String?
+  score         Int       @default(50)
+  tags          String?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  ownerId       String
+  owner         User      @relation(fields: [ownerId], references: [id])
+  companyId     String?
+  company       Company?  @relation(fields: [companyId], references: [id])
+  deals         Deal[]
+}
+
+model Company {
+  id            String    @id @default(uuid())
+  name          String
+  cnpj          String?
+  segment       String?
+  size          String?
+  website       String?
+  phone         String?
+  city          String?
+  state         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  ownerId       String
+  owner         User      @relation(fields: [ownerId], references: [id])
+  contacts      Contact[]
+  deals         Deal[]
+}
+
+model Deal {
+  id            String    @id @default(uuid())
+  name          String
+  value         Float     @default(0)
+  stage         String    @default("Prospecção")
+  probability   Int       @default(50)
+  closeDate     DateTime?
+  description   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  ownerId       String
+  owner         User      @relation(fields: [ownerId], references: [id])
+  contactId     String?
+  contact       Contact?  @relation(fields: [contactId], references: [id])
+  companyId     String?
+  company       Company?  @relation(fields: [companyId], references: [id])
+}
+
+model Activity {
+  id            String    @id @default(uuid())
+  type          String
+  title         String
+  date          DateTime
+  notes         String?
+  status        String    @default("pending")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  ownerId       String
+  owner         User      @relation(fields: [ownerId], references: [id])
+}

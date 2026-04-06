@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="SAYO CRM - Plataforma completa de gestão de relacionamento com clientes, powered by IA">
+<title>SAYO CRM - Powered by IA</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- LOGIN SCREEN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-bg-orbs"><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div></div>
+  <div class="login-card">
+    <div class="login-logo"><img src="logo-purple.png" alt="SAYO CRM"></div>
+    <div class="login-title">Bem-vindo ao SAYO CRM</div>
+    <div class="login-sub">Acesso restrito para contas autorizadas</div>
+    <div class="login-social" style="display:flex; justify-content:center; margin-top:24px;">
+      <div id="g_id_onload"
+           data-client_id="904362818877-aafj92jv7k2shamra267i8cp0m1pilkb.apps.googleusercontent.com"
+           data-context="signin"
+           data-ux_mode="popup"
+           data-callback="handleGoogleLogin"
+           data-auto_prompt="false">
+      </div>
+      <div class="g_id_signin"
+           data-type="standard"
+           data-shape="rectangular"
+           data-theme="outline"
+           data-text="signin_with"
+           data-size="large"
+           data-logo_alignment="left"
+           data-width="380">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo"><img src="logo.png" alt="SAYO" class="logo-img"></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">PRINCIPAL</div>
+    <a href="#" class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></a>
+    <div class="nav-section-label">VENDAS</div>
+    <a href="#" class="nav-item" data-page="pipeline"><span class="nav-icon">🔀</span><span class="nav-label">Pipeline</span><span class="nav-badge" id="pipelineBadge">0</span></a>
+    <a href="#" class="nav-item" data-page="deals"><span class="nav-icon">💼</span><span class="nav-label">Negócios</span></a>
+    <div class="nav-section-label">RELACIONAMENTO</div>
+    <a href="#" class="nav-item" data-page="contacts"><span class="nav-icon">👥</span><span class="nav-label">Contatos</span></a>
+    <a href="#" class="nav-item" data-page="companies"><span class="nav-icon">🏢</span><span class="nav-label">Empresas</span></a>
+    <a href="#" class="nav-item" data-page="activities"><span class="nav-icon">✅</span><span class="nav-label">Atividades</span><span class="nav-badge urgent" id="activitiesBadge">0</span></a>
+    <div class="nav-section-label">MARKETING</div>
+    <a href="#" class="nav-item" data-page="campaigns"><span class="nav-icon">📣</span><span class="nav-label">Campanhas</span></a>
+    <a href="#" class="nav-item" data-page="email"><span class="nav-icon">✉️</span><span class="nav-label">E-mail Marketing</span></a>
+    <a href="#" class="nav-item" data-page="automation"><span class="nav-icon">⚡</span><span class="nav-label">Automações</span></a>
+    <a href="#" class="nav-item" data-page="landing"><span class="nav-icon">🖥️</span><span class="nav-label">Landing Pages</span></a>
+    <div class="nav-section-label" id="adminLabel" style="display:none">DADOS DO TIME</div>
+    <a href="#" class="nav-item" data-page="users" id="adminNav" style="display:none"><span class="nav-icon">🛡️</span><span class="nav-label">Gestão de Usuários</span></a>
+    <div class="nav-section-label">CONFIGURAÇÃO</div>
+    <a href="#" class="nav-item" data-page="settings"><span class="nav-icon">⚙️</span><span class="nav-label">Configurações</span></a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-avatar" id="sidebarAvatar">YK</div>
+    <div class="user-info"><div class="user-name" id="sidebarName">Yokoyama</div><div class="user-role">Administrador</div></div>
+    <span class="logout-btn" id="logoutBtn" title="Sair">⏻</span>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main-content" id="mainContent">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+      <div class="breadcrumb" id="breadcrumb">Dashboard</div>
+    </div>
+    <div class="topbar-right">
+      <div class="search-box"><span class="search-icon">🔍</span><input type="text" placeholder="Buscar contatos, negócios, empresas..." id="globalSearch"></div>
+      <button class="btn-primary btn-sm" id="quickAddBtn">+ Adicionar</button>
+      <div class="topbar-separator"></div>
+      <div class="notif-bell" id="notifBtn">🔔<span class="notif-dot"></span></div>
+      <div class="topbar-avatar" id="topbarAvatar">YK</div>
+    </div>
+  </header>
+
+  <div class="page-container">
+    <!-- DASHBOARD -->
+    <section class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div><h1 class="page-title">Dashboard</h1><p class="page-subtitle">Visão geral do seu negócio — Abril 2026</p></div>
+        <div class="page-actions">
+          <select class="select-period" id="dashPeriod"><option>Este mês</option><option>Últimos 30 dias</option><option>Trimestre</option><option>Este ano</option></select>
+          <button class="btn-outline">↓ Exportar</button>
+        </div>
+      </div>
+      <div class="kpi-grid" id="dashKPIs">
+        <div class="kpi-card"><div class="kpi-icon purple">👥</div><div class="kpi-data"><div class="kpi-value" id="kpiLeads">1.284</div><div class="kpi-label">Total de Leads</div><div class="kpi-delta positive">↑ 18% vs mês anterior</div></div></div>
+        <div class="kpi-card"><div class="kpi-icon blue">💰</div><div class="kpi-data"><div class="kpi-value" id="kpiRevenue">R$ 487.320</div><div class="kpi-label">Receita no Funil</div><div class="kpi-delta positive">↑ 23% vs mês anterior</div></div></div>
+        <div class="kpi-card"><div class="kpi-icon pink">🎯</div><div class="kpi-data"><div class="kpi-value" id="kpiConv">34,7%</div><div class="kpi-label">Taxa de Conversão</div><div class="kpi-delta negative">↓ 2% vs mês anterior</div></div></div>
+        <div class="kpi-card"><div class="kpi-icon green">⏱️</div><div class="kpi-data"><div class="kpi-value" id="kpiCycle">8,3 dias</div><div class="kpi-label">Ciclo Médio de Venda</div><div class="kpi-delta positive">↑ Melhorou 1,2 dias</div></div></div>
+        <div class="kpi-card"><div class="kpi-icon orange">🔥</div><div class="kpi-data"><div class="kpi-value" id="kpiDeals">47</div><div class="kpi-label">Negócios Abertos</div><div class="kpi-delta positive">↑ 9 novos esta semana</div></div></div>
+        <div class="kpi-card"><div class="kpi-icon teal">✉️</div><div class="kpi-data"><div class="kpi-value" id="kpiEmail">62,1%</div><div class="kpi-label">Taxa Abertura E-mail</div><div class="kpi-delta positive">↑ 5% vs mês anterior</div></div></div>
+      </div>
+      <div class="charts-row">
+        <div class="chart-card large"><div class="chart-header"><h3>Leads por Mês</h3><div class="chart-legend"><span class="legend-dot purple"></span>Leads<span class="legend-dot pink"></span>Conversões</div></div><canvas id="leadsChart" height="100"></canvas></div>
+        <div class="chart-card"><div class="chart-header"><h3>Origem dos Leads</h3></div><canvas id="sourceChart" height="200"></canvas><div class="donut-legend"><div class="dl-item"><span style="background:#7B2FBE"></span>Orgânico 34%</div><div class="dl-item"><span style="background:#E91E8C"></span>Ads 28%</div><div class="dl-item"><span style="background:#5B8DEF"></span>Indicação 21%</div><div class="dl-item"><span style="background:#00C9A7"></span>Email 17%</div></div></div>
+      </div>
+      <div class="dashboard-bottom">
+        <div class="card pipeline-summary">
+          <div class="card-header"><h3>Funil de Vendas</h3><a href="#" class="card-link" data-page="pipeline">Ver tudo →</a></div>
+          <div class="funnel-stages">
+            <div class="funnel-stage"><div class="stage-bar-wrap"><div class="stage-bar" style="width:100%;background:linear-gradient(90deg,#7B2FBE,#9B59B6)"></div></div><div class="stage-info"><span class="stage-name">Prospecção</span><span class="stage-count">312 leads · R$ 0</span></div></div>
+            <div class="funnel-stage"><div class="stage-bar-wrap"><div class="stage-bar" style="width:78%;background:linear-gradient(90deg,#5B8DEF,#7B2FBE)"></div></div><div class="stage-info"><span class="stage-name">Qualificação</span><span class="stage-count">198 leads · R$ 94.200</span></div></div>
+            <div class="funnel-stage"><div class="stage-bar-wrap"><div class="stage-bar" style="width:55%;background:linear-gradient(90deg,#E91E8C,#9B59B6)"></div></div><div class="stage-info"><span class="stage-name">Proposta</span><span class="stage-count">97 leads · R$ 213.400</span></div></div>
+            <div class="funnel-stage"><div class="stage-bar-wrap"><div class="stage-bar" style="width:32%;background:linear-gradient(90deg,#00C9A7,#5B8DEF)"></div></div><div class="stage-info"><span class="stage-name">Negociação</span><span class="stage-count">47 leads · R$ 127.800</span></div></div>
+            <div class="funnel-stage"><div class="stage-bar-wrap"><div class="stage-bar" style="width:18%;background:linear-gradient(90deg,#F7B731,#F97F51)"></div></div><div class="stage-info"><span class="stage-name">Fechamento</span><span class="stage-count">23 leads · R$ 51.920</span></div></div>
+          </div>
+        </div>
+        <div class="card activities-feed">
+          <div class="card-header"><h3>Atividades Recentes</h3><a href="#" class="card-link" data-page="activities">Ver tudo →</a></div>
+          <div class="activity-list" id="dashActivityList"></div>
+        </div>
+        <div class="card top-sellers">
+          <div class="card-header"><h3>Top Vendedores</h3></div>
+          <div class="sellers-list" id="sellersList"></div>
+        </div>
+      </div>
+      <div class="charts-row">
+        <div class="chart-card"><div class="chart-header"><h3>Receita Mensal</h3></div><canvas id="revenueSmallChart" height="150"></canvas></div>
+        <div class="chart-card large"><div class="chart-header"><h3>NPS — Satisfação dos Clientes</h3></div><canvas id="npsChart" height="150"></canvas></div>
+      </div>
+    </section>
+
+    <!-- PIPELINE -->
+    <section class="page" id="page-pipeline">
+      <div class="page-header">
+        <div><h1 class="page-title">Pipeline de Vendas</h1><p class="page-subtitle" id="pipelineSubtitle">Carregando...</p></div>
+        <div class="page-actions">
+          <button class="btn-outline" id="configurePipelineBtn">⚙️ Configurar Etapas</button>
+          <button class="btn-primary" id="newDealBtn">+ Novo Negócio</button>
+        </div>
+      </div>
+      <div class="kanban-board" id="kanbanBoard"></div>
+    </section>
+
+    <!-- CONTACTS -->
+    <section class="page" id="page-contacts">
+      <div class="page-header">
+        <div><h1 class="page-title">Contatos</h1><p class="page-subtitle" id="contactsSubtitle">0 contatos cadastrados</p></div>
+        <div class="page-actions">
+          <button class="btn-outline" id="importContactsBtn">↑ Importar CSV</button>
+          <button class="btn-outline">↓ Exportar</button>
+          <button class="btn-primary" id="newContactBtn">+ Novo Contato</button>
+        </div>
+      </div>
+      <div class="filter-bar">
+        <div class="search-filter"><span>🔍</span><input type="text" placeholder="Buscar contatos..." id="contactSearch"></div>
+        <select class="filter-select" id="contactStageFilter"><option value="">Todos os estágios</option><option>Lead</option><option>Qualificado</option><option>Oportunidade</option><option>Cliente</option><option>Inativo</option></select>
+        <select class="filter-select" id="contactSourceFilter"><option value="">Todas as origens</option><option>Orgânico</option><option>Google Ads</option><option>Facebook Ads</option><option>Indicação</option><option>Email</option><option>WhatsApp</option></select>
+        <select class="filter-select" id="contactOwnerFilter"><option value="">Todos os responsáveis</option><option>João Silva</option><option>Maria Santos</option><option>Pedro Lima</option><option>Ana Costa</option></select>
+        <div class="view-toggle"><button class="view-btn active" data-view="table">☰</button><button class="view-btn" data-view="card">⊞</button></div>
+      </div>
+      <div class="table-card">
+        <table class="data-table" id="contactsTable">
+          <thead><tr><th><input type="checkbox" id="selectAllContacts"></th><th>Nome</th><th>Email</th><th>Telefone</th><th>Empresa</th><th>Estágio</th><th>Score</th><th>Origem</th><th>Responsável</th><th>Criado em</th><th>Ações</th></tr></thead>
+          <tbody id="contactsBody"></tbody>
+        </table>
+        <div class="table-pagination"><span class="pagination-info" id="contactsPaginationInfo"></span><div class="pagination-btns"><button class="page-btn" id="contactsPrevBtn">‹ Anterior</button><span id="contactsPageNums"></span><button class="page-btn" id="contactsNextBtn">Próximo ›</button></div></div>
+      </div>
+    </section>
+
+    <!-- COMPANIES -->
+    <section class="page" id="page-companies">
+      <div class="page-header">
+        <div><h1 class="page-title">Empresas</h1><p class="page-subtitle" id="companiesSubtitle">0 empresas cadastradas</p></div>
+        <div class="page-actions">
+          <button class="btn-outline">↑ Importar CSV</button>
+          <button class="btn-primary" id="newCompanyBtn">+ Nova Empresa</button>
+        </div>
+      </div>
+      <div class="filter-bar">
+        <div class="search-filter"><span>🔍</span><input type="text" placeholder="Buscar empresas..." id="companySearch"></div>
+        <select class="filter-select" id="companySegmentFilter"><option value="">Todos os segmentos</option><option>Tecnologia</option><option>Saúde</option><option>Educação</option><option>Varejo</option><option>Serviços</option><option>Indústria</option></select>
+        <select class="filter-select" id="companySizeFilter"><option value="">Todos os portes</option><option>MEI</option><option>Pequena</option><option>Média</option><option>Grande</option><option>Enterprise</option></select>
+      </div>
+      <div class="cards-grid" id="companiesGrid"></div>
+    </section>
+
+    <!-- ACTIVITIES -->
+    <section class="page" id="page-activities">
+      <div class="page-header">
+        <div><h1 class="page-title">Atividades</h1><p class="page-subtitle">Gerencie tarefas, ligações, reuniões e mais</p></div>
+        <div class="page-actions">
+          <button class="btn-outline" id="viewCalendarBtn">📅 Calendário</button>
+          <button class="btn-primary" id="newActivityBtn">+ Nova Atividade</button>
+        </div>
+      </div>
+      <div class="activities-layout">
+        <div class="activities-filters-col">
+          <div class="card filter-panel">
+            <h4>Filtrar por tipo</h4>
+            <label class="filter-check"><input type="checkbox" checked data-filter="tipo" value="tarefa"> 📋 Tarefa</label>
+            <label class="filter-check"><input type="checkbox" checked data-filter="tipo" value="ligacao"> 📞 Ligação</label>
+            <label class="filter-check"><input type="checkbox" checked data-filter="tipo" value="reuniao"> 🗓️ Reunião</label>
+            <label class="filter-check"><input type="checkbox" checked data-filter="tipo" value="email"> ✉️ Email</label>
+            <label class="filter-check"><input type="checkbox" checked data-filter="tipo" value="whatsapp"> 💬 WhatsApp</label>
+            <hr>
+            <h4>Status</h4>
+            <label class="filter-check"><input type="checkbox" checked data-filter="status" value="pending"> ⏳ Pendente</label>
+            <label class="filter-check"><input type="checkbox" checked data-filter="status" value="done"> ✅ Concluída</label>
+            <label class="filter-check"><input type="checkbox" checked data-filter="status" value="late"> 🔴 Atrasada</label>
+          </div>
+        </div>
+        <div class="activities-main-col"><div class="activity-sections" id="activitySections"></div></div>
+      </div>
+    </section>
+
+    <!-- CAMPAIGNS -->
+    <section class="page" id="page-campaigns">
+      <div class="page-header">
+        <div><h1 class="page-title">Campanhas</h1><p class="page-subtitle">Gerencie suas campanhas de marketing</p></div>
+        <div class="page-actions"><button class="btn-primary" id="newCampaignBtn">+ Nova Campanha</button></div>
+      </div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+        <div class="kpi-card"><div class="kpi-icon purple">📣</div><div class="kpi-data"><div class="kpi-value">24</div><div class="kpi-label">Campanhas Ativas</div></div></div>
+        <div class="kpi-card"><div class="kpi-icon blue">✉️</div><div class="kpi-data"><div class="kpi-value">148.320</div><div class="kpi-label">E-mails Enviados</div></div></div>
+        <div class="kpi-card"><div class="kpi-icon pink">📬</div><div class="kpi-data"><div class="kpi-value">62,1%</div><div class="kpi-label">Taxa de Abertura</div></div></div>
+        <div class="kpi-card"><div class="kpi-icon green">🖱️</div><div class="kpi-data"><div class="kpi-value">8,4%</div><div class="kpi-label">Taxa de Clique</div></div></div>
+      </div>
+      <div class="campaigns-grid" id="campaignsGrid"></div>
+    </section>
+
+    <!-- EMAIL MARKETING -->
+    <section class="page" id="page-email">
+      <div class="page-header">
+        <div><h1 class="page-title">E-mail Marketing</h1><p class="page-subtitle">Crie e envie e-mails para sua base de contatos</p></div>
+        <div class="page-actions"><button class="btn-primary" id="newEmailBtn">+ Novo E-mail</button></div>
+      </div>
+      <div class="email-tabs">
+        <button class="etab active" data-etab="templates">Templates</button>
+        <button class="etab" data-etab="enviados">Enviados</button>
+        <button class="etab" data-etab="rascunhos">Rascunhos</button>
+        <button class="etab" data-etab="agendados">Agendados</button>
+      </div>
+      <div class="email-tab-content active" id="etab-templates"><div class="templates-grid" id="emailTemplatesGrid"></div></div>
+      <div class="email-tab-content" id="etab-enviados"><div class="table-card"><table class="data-table"><thead><tr><th>Assunto</th><th>Lista</th><th>Enviados</th><th>Abertura</th><th>Cliques</th><th>Data</th><th>Status</th></tr></thead><tbody id="sentEmailsBody"></tbody></table></div></div>
+      <div class="email-tab-content" id="etab-rascunhos"><div class="empty-state"><span>📝</span><p>Nenhum rascunho salvo</p></div></div>
+      <div class="email-tab-content" id="etab-agendados"><div class="empty-state"><span>📅</span><p>Nenhum e-mail agendado</p></div></div>
+    </section>
+
+    <!-- AUTOMATIONS -->
+    <section class="page" id="page-automation">
+      <div class="page-header">
+        <div><h1 class="page-title">Automações</h1><p class="page-subtitle">Configure fluxos automáticos de nutrição e vendas</p></div>
+        <div class="page-actions"><button class="btn-primary" id="newAutomationBtn">+ Nova Automação</button></div>
+      </div>
+      <div class="automations-list" id="automationsList"></div>
+    </section>
+
+    <!-- LANDING PAGES -->
+    <section class="page" id="page-landing">
+      <div class="page-header">
+        <div><h1 class="page-title">Landing Pages</h1><p class="page-subtitle">Crie páginas de captura de leads de alta conversão</p></div>
+        <div class="page-actions"><button class="btn-primary">+ Nova Landing Page</button></div>
+      </div>
+      <div class="landing-grid" id="landingGrid"></div>
+    </section>
+
+    <!-- REPORTS -->
+    <section class="page" id="page-reports">
+      <div class="page-header">
+        <div><h1 class="page-title">Relatórios</h1><p class="page-subtitle">Análises detalhadas do seu desempenho</p></div>
+        <div class="page-actions"><select class="select-period"><option>Este mês</option><option>Últimos 30 dias</option><option>Trimestre</option><option>Este ano</option></select><button class="btn-outline">↓ Exportar PDF</button></div>
+      </div>
+      <div class="report-tabs">
+        <button class="rtab active" data-rtab="vendas">Vendas</button>
+        <button class="rtab" data-rtab="marketing">Marketing</button>
+        <button class="rtab" data-rtab="atividades">Atividades</button>
+        <button class="rtab" data-rtab="equipe">Equipe</button>
+      </div>
+      <div class="rtab-content active" id="rtab-vendas">
+        <div class="charts-row"><div class="chart-card large"><div class="chart-header"><h3>Receita Mensal</h3></div><canvas id="revenueChart" height="120"></canvas></div><div class="chart-card"><div class="chart-header"><h3>Negócios por Etapa</h3></div><canvas id="stageChart" height="200"></canvas></div></div>
+        <div class="charts-row"><div class="chart-card"><div class="chart-header"><h3>Ticket Médio</h3></div><canvas id="ticketChart" height="200"></canvas></div><div class="chart-card large"><div class="chart-header"><h3>Ciclo de Venda por Etapa</h3></div><canvas id="cycleChart" height="120"></canvas></div></div>
+      </div>
+      <div class="rtab-content" id="rtab-marketing">
+        <div class="charts-row"><div class="chart-card large"><div class="chart-header"><h3>Leads por Origem</h3></div><canvas id="mktLeadsChart" height="120"></canvas></div><div class="chart-card"><div class="chart-header"><h3>ROI por Canal</h3></div><canvas id="roiChart" height="200"></canvas></div></div>
+      </div>
+      <div class="rtab-content" id="rtab-atividades">
+        <div class="charts-row"><div class="chart-card large"><div class="chart-header"><h3>Atividades por Dia</h3></div><canvas id="activitiesChartReport" height="120"></canvas></div><div class="chart-card"><div class="chart-header"><h3>Atividades por Tipo</h3></div><canvas id="actTypeChart" height="200"></canvas></div></div>
+      </div>
+      <div class="rtab-content" id="rtab-equipe">
+        <div class="table-card"><table class="data-table"><thead><tr><th>Vendedor</th><th>Negócios Abertos</th><th>Fechamentos</th><th>Receita</th><th>Conv. %</th><th>Atividades</th></tr></thead><tbody id="teamReportBody"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- DEALS -->
+    <section class="page" id="page-deals">
+      <div class="page-header">
+        <div><h1 class="page-title">Negócios</h1><p class="page-subtitle" id="dealsSubtitle">Todos os negócios</p></div>
+        <div class="page-actions"><button class="btn-primary" id="newDealBtn2">+ Novo Negócio</button></div>
+      </div>
+      <div class="filter-bar">
+        <div class="search-filter"><span>🔍</span><input type="text" placeholder="Buscar negócios..." id="dealSearch"></div>
+        <select class="filter-select" id="dealStageFilter"><option value="">Todas as etapas</option><option>Prospecção</option><option>Qualificação</option><option>Proposta</option><option>Negociação</option><option>Fechamento</option></select>
+        <select class="filter-select" id="dealOwnerFilter"><option value="">Todos os responsáveis</option><option>João Silva</option><option>Maria Santos</option><option>Pedro Lima</option><option>Ana Costa</option></select>
+      </div>
+      <div class="table-card"><table class="data-table"><thead><tr><th>Negócio</th><th>Valor</th><th>Etapa</th><th>Prob.</th><th>Contato</th><th>Empresa</th><th>Responsável</th><th>Previsão</th><th>Ações</th></tr></thead><tbody id="dealsBody"></tbody></table></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="page" id="page-settings">
+      <div class="page-header"><div><h1 class="page-title">Configurações</h1><p class="page-subtitle">Personalize o seu CRM SAYO</p></div></div>
+      <div class="settings-layout">
+        <div class="settings-nav">
+          <a class="settings-nav-item active" data-stab="perfil">👤 Perfil</a>
+          <a class="settings-nav-item" data-stab="empresa">🏢 Empresa</a>
+          <a class="settings-nav-item" data-stab="usuarios">👥 Usuários</a>
+          <a class="settings-nav-item" data-stab="pipeline-cfg">🔀 Pipeline</a>
+          <a class="settings-nav-item" data-stab="integracoes">🔌 Integrações</a>
+          <a class="settings-nav-item" data-stab="notificacoes">🔔 Notificações</a>
+          <a class="settings-nav-item" data-stab="api">🔑 API & Webhooks</a>
+          <a class="settings-nav-item" data-stab="plano">💳 Plano & Faturamento</a>
+        </div>
+        <div class="settings-content">
+          <div class="stab active" id="stab-perfil">
+            <div class="settings-section"><h3>Informações do Perfil</h3>
+              <div class="avatar-upload"><div class="big-avatar" id="profileAvatar">YK</div><button class="btn-outline btn-sm">Alterar foto</button></div>
+              <div class="form-row"><div class="form-group"><label>Nome</label><input type="text" id="profileName" value="Yokoyama" class="form-input"></div><div class="form-group"><label>Sobrenome</label><input type="text" value="" class="form-input"></div></div>
+              <div class="form-row"><div class="form-group"><label>E-mail</label><input type="email" value="yokoyama@sayo.com.br" class="form-input"></div><div class="form-group"><label>Telefone</label><input type="text" class="form-input"></div></div>
+              <div class="form-group"><label>Cargo</label><input type="text" value="Administrador" class="form-input"></div>
+              <button class="btn-primary">Salvar Alterações</button>
+            </div>
+          </div>
+          <div class="stab" id="stab-empresa">
+            <div class="settings-section"><h3>Dados da Empresa</h3>
+              <div class="form-group"><label>Nome da Empresa</label><input type="text" value="SAYO" class="form-input"></div>
+              <div class="form-row"><div class="form-group"><label>CNPJ</label><input type="text" class="form-input" placeholder="00.000.000/0000-00"></div><div class="form-group"><label>Segmento</label><select class="form-input"><option>Tecnologia</option><option>Serviços</option><option>SaaS</option></select></div></div>
+              <div class="form-row"><div class="form-group"><label>Site</label><input type="url" class="form-input" placeholder="https://"></div><div class="form-group"><label>Telefone</label><input type="text" class="form-input"></div></div>
+              <div class="form-group"><label>Endereço</label><input type="text" class="form-input"></div>
+              <button class="btn-primary">Salvar</button>
+            </div>
+          </div>
+          <div class="stab" id="stab-usuarios">
+            <div class="settings-section">
+              <div class="section-header-row"><h3>Usuários da Equipe</h3><button class="btn-primary btn-sm" id="inviteUserBtn">+ Convidar Usuário</button></div>
+              <div class="table-card"><table class="data-table"><thead><tr><th>Nome</th><th>E-mail</th><th>Cargo</th><th>Acesso</th><th>Status</th><th>Ações</th></tr></thead><tbody id="usersTableBody"></tbody></table></div>
+            </div>
+          </div>
+          <div class="stab" id="stab-pipeline-cfg">
+            <div class="settings-section"><h3>Configurar Etapas do Pipeline</h3>
+              <div class="pipeline-stages-cfg" id="pipelineStagesCfg"></div>
+              <div style="margin-top:12px;display:flex;gap:8px">
+                <button class="btn-outline" id="addStageBtn">+ Adicionar Etapa</button>
+                <button class="btn-primary" id="savePipelineBtn">Salvar</button>
+              </div>
+            </div>
+          </div>
+          <div class="stab" id="stab-integracoes">
+            <div class="settings-section"><h3>Integrações</h3>
+              <div class="integrations-grid">
+                <div class="integration-card active"><div class="int-logo">📧</div><div class="int-name">Gmail</div><div class="int-status connected">Conectado</div></div>
+                <div class="integration-card"><div class="int-logo">📱</div><div class="int-name">WhatsApp Business</div><div class="int-status">Conectar</div></div>
+                <div class="integration-card"><div class="int-logo">📊</div><div class="int-name">Google Analytics</div><div class="int-status">Conectar</div></div>
+                <div class="integration-card"><div class="int-logo">💼</div><div class="int-name">LinkedIn</div><div class="int-status">Conectar</div></div>
+                <div class="integration-card"><div class="int-logo">🔵</div><div class="int-name">Facebook Ads</div><div class="int-status">Conectar</div></div>
+                <div class="integration-card"><div class="int-logo">🟢</div><div class="int-name">Google Ads</div><div class="int-status">Conectar</div></div>
+                <div class="integration-card"><div class="int-logo">🪝</div><div class="int-name">Webhook API</div><div class="int-status">Configurar</div></div>
+                <div class="integration-card"><div class="int-logo">⚡</div><div class="int-name">Zapier</div><div class="int-status">Conectar</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="stab" id="stab-notificacoes">
+            <div class="settings-section"><h3>Preferências de Notificação</h3>
+              <div class="notif-settings">
+                <div class="notif-row"><div class="notif-info"><strong>Novo lead capturado</strong><p>Receba alertas quando um novo lead entrar</p></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+                <div class="notif-row"><div class="notif-info"><strong>Tarefa atrasada</strong><p>Alerta quando uma tarefa passar do prazo</p></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+                <div class="notif-row"><div class="notif-info"><strong>Negócio movido no pipeline</strong><p>Notificação de avanço de etapa</p></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+                <div class="notif-row"><div class="notif-info"><strong>Relatório semanal</strong><p>Resumo automático toda segunda-feira</p></div><label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+                <div class="notif-row"><div class="notif-info"><strong>Resultado de campanha</strong><p>Quando uma campanha de e-mail terminar</p></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+              </div>
+            </div>
+          </div>
+          <div class="stab" id="stab-api">
+            <div class="settings-section"><h3>API & Webhooks</h3>
+              <div class="form-group"><label>Sua Chave de API</label><div style="display:flex;gap:8px"><input type="text" class="form-input" value="sk-sayo-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" readonly style="flex:1;font-family:monospace"><button class="btn-outline btn-sm">Copiar</button><button class="btn-outline btn-sm">Gerar nova</button></div></div>
+              <div class="form-group" style="margin-top:20px"><label>Webhook URL (Notificações de eventos)</label><input type="url" class="form-input" placeholder="https://seu-servidor.com/webhook"></div>
+              <div style="margin-top:8px"><button class="btn-primary">Salvar Webhook</button></div>
+              <div style="margin-top:24px"><h4 style="margin-bottom:12px;font-size:14px">Eventos disponíveis</h4>
+                <div class="notif-settings">
+                  <div class="notif-row"><div class="notif-info"><strong>contact.created</strong><p>Dispara quando um novo contato é criado</p></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+                  <div class="notif-row"><div class="notif-info"><strong>deal.stage_changed</strong><p>Dispara quando um negócio muda de etapa</p></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+                  <div class="notif-row"><div class="notif-info"><strong>deal.won</strong><p>Dispara quando um negócio é ganho</p></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="stab" id="stab-plano">
+            <div class="settings-section"><h3>Seu Plano</h3>
+              <div class="plan-card current-plan">
+                <div class="plan-header"><div class="plan-name">SAYO PRO</div><div class="plan-price">R$ 297<span>/mês</span></div></div>
+                <div class="plan-features"><div class="plan-feat">✅ Contatos ilimitados</div><div class="plan-feat">✅ 5 usuários inclusos</div><div class="plan-feat">✅ E-mail marketing até 50k/mês</div><div class="plan-feat">✅ Automações ilimitadas</div><div class="plan-feat">✅ Relatórios avançados</div><div class="plan-feat">✅ Suporte prioritário</div></div>
+                <div class="plan-usage">
+                  <div class="usage-item"><span>Contatos</span><div class="usage-bar-wrap"><div class="usage-bar" style="width:43%"></div></div><span>1.284 / ∞</span></div>
+                  <div class="usage-item"><span>E-mails</span><div class="usage-bar-wrap"><div class="usage-bar" style="width:29%"></div></div><span>14.832 / 50.000</span></div>
+                  <div class="usage-item"><span>Usuários</span><div class="usage-bar-wrap"><div class="usage-bar" style="width:60%"></div></div><span>3 / 5</span></div>
+                </div>
+                <button class="btn-outline">Fazer upgrade para Enterprise →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- USERS MANAGEMENT -->
+    <section class="page" id="page-users">
+      <div class="page-header">
+        <div><h1 class="page-title">Gestão de Usuários</h1><p class="page-subtitle">Autorize acessos e defina cargos da equipe</p></div>
+        <div class="page-actions">
+          <button class="btn-primary" id="newUserBtn" data-modal="userModal">+ Autorizar Novo E-mail</button>
+        </div>
+      </div>
+      <div class="card" style="padding: 24px;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Usuário</th>
+              <th>E-mail</th>
+              <th>Cargo</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBodyContent">
+            <!-- Gerado via JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div class="modal-overlay" id="userModal">
+  <div class="modal">
+    <div class="modal-header"><h2>Autorizar Usuário</h2><button class="modal-close" data-modal="userModal">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>E-mail Google *</label><input type="email" id="uEmail" class="form-input" placeholder="exemplo@gmail.com"></div>
+      <div class="form-group"><label>Nome (Opcional)</label><input type="text" id="uName" class="form-input" placeholder="Nome do colaborador"></div>
+      <div class="form-group">
+        <label>Cargo</label>
+        <select id="uRole" class="form-input">
+          <option value="Vendedor">Vendedor</option>
+          <option value="Gerente">Gerente</option>
+          <option value="ADMIN">ADMIN</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn-outline" data-modal="userModal">Cancelar</button><button class="btn-primary" id="saveUserBtn">Salvar Acesso</button></div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="contactModal">
+  <div class="modal large">
+    <div class="modal-header"><h2 id="contactModalTitle">Novo Contato</h2><button class="modal-close" data-modal="contactModal">✕</button></div>
+    <div class="modal-body">
+      <div class="modal-tabs"><button class="mtab active" data-mtab="info">Informações</button><button class="mtab" data-mtab="hist">Histórico</button><button class="mtab" data-mtab="deals-tab">Negócios</button><button class="mtab" data-mtab="notes">Notas</button></div>
+      <div class="mtab-content active" id="mtab-info">
+        <div class="form-row"><div class="form-group"><label>Nome *</label><input type="text" id="cName" class="form-input" placeholder="Nome completo"></div><div class="form-group"><label>E-mail *</label><input type="email" id="cEmail" class="form-input" placeholder="email@exemplo.com"></div></div>
+        <div class="form-row"><div class="form-group"><label>Telefone</label><input type="text" id="cPhone" class="form-input" placeholder="(11) 99999-9999"></div><div class="form-group"><label>WhatsApp</label><input type="text" id="cWhatsapp" class="form-input" placeholder="(11) 99999-9999"></div></div>
+        <div class="form-row"><div class="form-group"><label>Empresa</label><input type="text" id="cCompany" class="form-input"></div><div class="form-group"><label>Cargo</label><input type="text" id="cRole" class="form-input"></div></div>
+        <div class="form-row">
+          <div class="form-group"><label>Estágio</label><select id="cStage" class="form-input"><option>Lead</option><option>Qualificado</option><option>Oportunidade</option><option>Cliente</option><option>Inativo</option></select></div>
+          <div class="form-group"><label>Origem</label><select id="cSource" class="form-input"><option>Orgânico</option><option>Google Ads</option><option>Facebook Ads</option><option>Indicação</option><option>Email</option><option>WhatsApp</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Responsável</label><select id="cOwner" class="form-input"><option>João Silva</option><option>Maria Santos</option><option>Pedro Lima</option><option>Ana Costa</option></select></div>
+          <div class="form-group"><label>Score (0-100)</label><input type="number" id="cScore" class="form-input" min="0" max="100" value="50"></div>
+        </div>
+        <div class="form-group"><label>Tags</label><input type="text" id="cTags" class="form-input" placeholder="Ex: vip, interessado, follow-up (separar por vírgula)"></div>
+        <div class="form-group"><label>Observações</label><textarea id="cNotes" class="form-input" rows="3"></textarea></div>
+      </div>
+      <div class="mtab-content" id="mtab-hist"><div class="contact-history" id="contactHistory"><div class="empty-state"><span>📋</span><p>Salve o contato para ver o histórico</p></div></div></div>
+      <div class="mtab-content" id="mtab-deals-tab"><div class="empty-state"><span>💼</span><p>Nenhum negócio vinculado</p></div></div>
+      <div class="mtab-content" id="mtab-notes"><div class="form-group"><label>Adicionar nota</label><textarea class="form-input" rows="4" placeholder="Escreva uma nota sobre este contato..."></textarea></div><button class="btn-primary btn-sm">Salvar Nota</button></div>
+    </div>
+    <div class="modal-footer"><button class="btn-outline" data-modal="contactModal">Cancelar</button><button class="btn-primary" id="saveContactBtn">Salvar Contato</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="dealModal">
+  <div class="modal large">
+    <div class="modal-header"><h2 id="dealModalTitle">Novo Negócio</h2><button class="modal-close" data-modal="dealModal">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row"><div class="form-group"><label>Nome do Negócio *</label><input type="text" id="dName" class="form-input" placeholder="Ex: Proposta Tech Solutions"></div><div class="form-group"><label>Valor (R$) *</label><input type="number" id="dValue" class="form-input" placeholder="0,00"></div></div>
+      <div class="form-row"><div class="form-group"><label>Contato</label><input type="text" id="dContact" class="form-input" placeholder="Buscar contato..."></div><div class="form-group"><label>Empresa</label><input type="text" id="dCompany" class="form-input"></div></div>
+      <div class="form-row">
+        <div class="form-group"><label>Etapa</label><select id="dStage" class="form-input"><option>Prospecção</option><option>Qualificação</option><option>Proposta</option><option>Negociação</option><option>Fechamento</option></select></div>
+        <div class="form-group"><label>Probabilidade (%)</label><input type="number" id="dProb" class="form-input" min="0" max="100" value="50"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Responsável</label><select id="dOwner" class="form-input"><option>João Silva</option><option>Maria Santos</option><option>Pedro Lima</option><option>Ana Costa</option></select></div>
+        <div class="form-group"><label>Previsão de Fechamento</label><input type="date" id="dCloseDate" class="form-input"></div>
+      </div>
+      <div class="form-group"><label>Descrição</label><textarea id="dDesc" class="form-input" rows="3"></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn-outline" data-modal="dealModal">Cancelar</button><button class="btn-primary" id="saveDealBtn">Salvar Negócio</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="activityModal">
+  <div class="modal">
+    <div class="modal-header"><h2>Nova Atividade</h2><button class="modal-close" data-modal="activityModal">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Tipo</label>
+        <div class="type-selector">
+          <button class="type-btn active" data-type="tarefa">📋 Tarefa</button>
+          <button class="type-btn" data-type="ligacao">�� Ligação</button>
+          <button class="type-btn" data-type="reuniao">🗓️ Reunião</button>
+          <button class="type-btn" data-type="email">✉️ Email</button>
+          <button class="type-btn" data-type="whatsapp">💬 WhatsApp</button>
+        </div>
+      </div>
+      <div class="form-group"><label>Título *</label><input type="text" id="aTitle" class="form-input" placeholder="Descreva a atividade..."></div>
+      <div class="form-row"><div class="form-group"><label>Data *</label><input type="date" id="aDate" class="form-input"></div><div class="form-group"><label>Hora</label><input type="time" id="aTime" class="form-input"></div></div>
+      <div class="form-row"><div class="form-group"><label>Contato</label><input type="text" id="aContact" class="form-input" placeholder="Vincular contato..."></div><div class="form-group"><label>Responsável</label><select id="aOwner" class="form-input"><option>João Silva</option><option>Maria Santos</option><option>Pedro Lima</option><option>Ana Costa</option></select></div></div>
+      <div class="form-group"><label>Observações</label><textarea id="aNotes" class="form-input" rows="3"></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn-outline" data-modal="activityModal">Cancelar</button><button class="btn-primary" id="saveActivityBtn">Salvar Atividade</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="companyModal">
+  <div class="modal large">
+    <div class="modal-header"><h2 id="companyModalTitle">Nova Empresa</h2><button class="modal-close" data-modal="companyModal">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row"><div class="form-group"><label>Nome da Empresa *</label><input type="text" id="coName" class="form-input"></div><div class="form-group"><label>CNPJ</label><input type="text" id="coCNPJ" class="form-input" placeholder="00.000.000/0000-00"></div></div>
+      <div class="form-row"><div class="form-group"><label>Segmento</label><select id="coSegment" class="form-input"><option>Tecnologia</option><option>Saúde</option><option>Educação</option><option>Varejo</option><option>Serviços</option><option>Indústria</option></select></div><div class="form-group"><label>Porte</label><select id="coSize" class="form-input"><option>MEI</option><option>Pequena</option><option>Média</option><option>Grande</option><option>Enterprise</option></select></div></div>
+      <div class="form-row"><div class="form-group"><label>Site</label><input type="url" id="coSite" class="form-input" placeholder="https://"></div><div class="form-group"><label>Telefone</label><input type="text" id="coPhone" class="form-input"></div></div>
+      <div class="form-row"><div class="form-group"><label>Cidade</label><input type="text" id="coCity" class="form-input"></div><div class="form-group"><label>Estado</label><input type="text" id="coState" class="form-input" placeholder="SP"></div></div>
+      <div class="form-group"><label>Responsável</label><select id="coOwner" class="form-input"><option>João Silva</option><option>Maria Santos</option><option>Pedro Lima</option><option>Ana Costa</option></select></div>
+    </div>
+    <div class="modal-footer"><button class="btn-outline" data-modal="companyModal">Cancelar</button><button class="btn-primary" id="saveCompanyBtn">Salvar Empresa</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="campaignModal">
+  <div class="modal large">
+    <div class="modal-header"><h2>Nova Campanha</h2><button class="modal-close" data-modal="campaignModal">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Nome da Campanha *</label><input type="text" id="camName" class="form-input"></div>
+      <div class="form-row"><div class="form-group"><label>Tipo</label><select id="camType" class="form-input"><option>E-mail Marketing</option><option>Google Ads</option><option>Facebook Ads</option><option>SMS</option><option>WhatsApp</option></select></div><div class="form-group"><label>Orçamento (R$)</label><input type="number" id="camBudget" class="form-input"></div></div>
+      <div class="form-row"><div class="form-group"><label>Data Início</label><input type="date" id="camStart" class="form-input"></div><div class="form-group"><label>Data Fim</label><input type="date" id="camEnd" class="form-input"></div></div>
+      <div class="form-group"><label>Objetivo</label><textarea id="camGoal" class="form-input" rows="2" placeholder="Descreva o objetivo da campanha..."></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn-outline" data-modal="campaignModal">Cancelar</button><button class="btn-primary" id="saveCampaignBtn">Criar Campanha</button></div>
+  </div>
+</div>
+
+<!-- QUICK MENU -->
+<div class="quick-menu" id="quickMenu" style="display:none">
+  <div class="qm-item" data-action="contact">👥 Novo Contato</div>
+  <div class="qm-item" data-action="deal">💼 Novo Negócio</div>
+  <div class="qm-item" data-action="activity">✅ Nova Atividade</div>
+  <div class="qm-item" data-action="company">🏢 Nova Empresa</div>
+  <div class="qm-item" data-action="campaign">📣 Nova Campanha</div>
+</div>
+
+<!-- NOTIFICATION PANEL -->
+<div class="notif-panel" id="notifPanel" style="display:none">
+  <div class="notif-panel-header"><h4>Notificações</h4><button class="btn-link">Marcar todas como lidas</button></div>
+  <div class="notif-items" id="notifItems"></div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
