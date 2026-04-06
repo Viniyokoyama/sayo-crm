@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupModals();
   setupNavigation();
   setupSidebarToggle();
+  setupTabSwitching();
+  setupNotifications();
+  setupSettings();
 
   try {
     const res = await fetch('/api/auth/me');
@@ -145,15 +148,27 @@ function navigateTo(page) {
 // ─── MODALS ───────────────────────────────────────────────────────────────────
 function setupModals() {
   document.addEventListener('click', (e) => {
-    const opener = e.target.closest('[data-modal]');
-    if (opener && !e.target.closest('.modal-overlay')) {
-      const modal = document.getElementById(opener.getAttribute('data-modal'));
-      if (modal) openModal(modal.id);
-    }
+    // Fechar ao clicar no overlay
     if (e.target.classList.contains('modal-overlay')) closeModal(e.target.id);
-    if (e.target.closest('.modal-close')) {
+    // Fechar pelo botão X
+    if (e.target.closest('.modal-close') && !e.target.closest('.modal-close[onclick]')) {
       const m = e.target.closest('.modal-overlay');
       if (m) closeModal(m.id);
+    }
+    // Fechar pelos botões Cancelar (data-modal no footer)
+    const cancelBtn = e.target.closest('[data-modal]');
+    if (cancelBtn && !e.target.closest('.modal-overlay') === false) {
+      // Só se for dentro de modal-footer ou topbar
+      if (cancelBtn.closest('.modal-footer') || cancelBtn.closest('.topbar-right')) {
+        const modal = document.getElementById(cancelBtn.getAttribute('data-modal'));
+        if (modal) closeModal(modal.id);
+      }
+    }
+    // Abrir modal pelo data-modal fora de modal
+    const opener = e.target.closest('[data-modal]:not(.modal-footer [data-modal])');
+    if (opener && !e.target.closest('.modal-overlay') && !opener.closest('.modal-footer')) {
+      const modal = document.getElementById(opener.getAttribute('data-modal'));
+      if (modal && modal.classList.contains('modal-overlay')) openModal(modal.id);
     }
   });
 
@@ -171,10 +186,20 @@ function setupModals() {
   // Quick Add buttons
   document.getElementById('newContactBtn')?.addEventListener('click', () => openNewContact());
   document.getElementById('newCompanyBtn')?.addEventListener('click', () => openModal('companyModal'));
-  document.getElementById('newDealBtn')?.addEventListener('click', () => openModal('dealModal'));
+  document.getElementById('newDealBtn')?.addEventListener('click', () => openNewDeal());
+  document.getElementById('newDealBtn2')?.addEventListener('click', () => openNewDeal());
   document.getElementById('newActivityBtn')?.addEventListener('click', () => openModal('activityModal'));
   document.getElementById('newUserBtn')?.addEventListener('click', () => openModal('userModal'));
   document.getElementById('quickAddBtn')?.addEventListener('click', () => openModal('contactModal'));
+
+  // Cancelar buttons nos modais (delegação)
+  document.querySelectorAll('.modal-footer .btn-outline[data-modal]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const modalId = btn.getAttribute('data-modal');
+      closeModal(modalId);
+    });
+  });
 
   // Activity type buttons
   document.querySelectorAll('.type-btn').forEach(btn => {
@@ -182,6 +207,20 @@ function setupModals() {
       document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
     });
+  });
+
+  // Configure Pipeline
+  document.getElementById('configurePipelineBtn')?.addEventListener('click', () => {
+    openModal('pipelineConfigModal');
+  });
+
+  // Deal detail edit btn
+  document.getElementById('dealDetailEditBtn')?.addEventListener('click', () => {
+    const dealId = document.getElementById('dealDetailModal').dataset.dealId;
+    if (dealId) {
+      document.getElementById('dealDetailModal').classList.remove('active');
+      editDeal(dealId);
+    }
   });
 }
 
@@ -192,14 +231,192 @@ function openModal(id) {
 
 function closeModal(id) {
   const m = document.getElementById(id);
-  if (m) { m.classList.remove('active'); m.querySelectorAll('input, textarea, select').forEach(i => { if (i.name !== 'type') i.value = ''; }); }
+  if (m) {
+    m.classList.remove('active');
+    m.querySelectorAll('input, textarea, select').forEach(i => { if (i.name !== 'type') i.value = ''; });
+  }
 }
 
 function openNewContact() {
   document.getElementById('contactModalTitle').textContent = 'Novo Contato';
   document.getElementById('saveContactBtn').dataset.editId = '';
+  // Reset tabs
+  document.querySelectorAll('#contactModal .mtab').forEach((t, i) => t.classList.toggle('active', i === 0));
+  document.querySelectorAll('#contactModal .mtab-content').forEach((t, i) => t.classList.toggle('active', i === 0));
   openModal('contactModal');
 }
+
+function openNewDeal() {
+  const el = document.getElementById('dealModalTitle');
+  if (el) el.textContent = 'Novo Negócio';
+  const btn = document.getElementById('saveDealBtn');
+  if (btn) btn.dataset.editId = '';
+  openModal('dealModal');
+}
+
+// ─── TAB SWITCHING ───────────────────────────────────────────────────────────
+function setupTabSwitching() {
+  // Modal tabs (.mtab → .mtab-content)
+  document.addEventListener('click', (e) => {
+    const tab = e.target.closest('.mtab');
+    if (tab) {
+      const container = tab.closest('.modal-body');
+      if (!container) return;
+      const tabName = tab.getAttribute('data-mtab');
+      container.querySelectorAll('.mtab').forEach(t => t.classList.remove('active'));
+      container.querySelectorAll('.mtab-content').forEach(c => c.classList.remove('active'));
+      tab.classList.add('active');
+      const content = container.querySelector(`#mtab-${tabName}`);
+      if (content) content.classList.add('active');
+    }
+
+    // Email tabs
+    const etab = e.target.closest('.etab');
+    if (etab) {
+      const page = etab.closest('.page');
+      if (!page) return;
+      const tabName = etab.getAttribute('data-etab');
+      page.querySelectorAll('.etab').forEach(t => t.classList.remove('active'));
+      page.querySelectorAll('.email-tab-content').forEach(c => c.classList.remove('active'));
+      etab.classList.add('active');
+      const content = page.querySelector(`#etab-${tabName}`);
+      if (content) content.classList.add('active');
+    }
+
+    // Report tabs
+    const rtab = e.target.closest('.rtab');
+    if (rtab) {
+      const page = rtab.closest('.page');
+      if (!page) return;
+      const tabName = rtab.getAttribute('data-rtab');
+      page.querySelectorAll('.rtab').forEach(t => t.classList.remove('active'));
+      page.querySelectorAll('.rtab-content').forEach(c => c.classList.remove('active'));
+      rtab.classList.add('active');
+      const content = page.querySelector(`#rtab-${tabName}`);
+      if (content) content.classList.add('active');
+    }
+  });
+}
+
+// ─── NOTIFICATIONS ───────────────────────────────────────────────────────────
+function setupNotifications() {
+  const bell = document.getElementById('notifBtn');
+  const panel = document.getElementById('notifPanel');
+  if (!bell || !panel) return;
+
+  // Estado inicial: escondido
+  panel.style.display = 'none';
+
+  bell.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = panel.style.display !== 'none';
+    panel.style.display = isOpen ? 'none' : 'block';
+    // Remover dot ao abrir
+    if (!isOpen) {
+      const dot = bell.querySelector('.notif-dot');
+      if (dot) dot.style.display = 'none';
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!panel.contains(e.target) && !bell.contains(e.target)) {
+      panel.style.display = 'none';
+    }
+  });
+
+  document.getElementById('markAllReadBtn')?.addEventListener('click', () => {
+    document.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
+    showAlert('Todas notificações marcadas como lidas', 'success');
+  });
+}
+
+// ─── SETTINGS TABS ───────────────────────────────────────────────────────────
+function setupSettings() {
+  document.addEventListener('click', (e) => {
+    const item = e.target.closest('.settings-nav-item[data-stab]');
+    if (!item) return;
+    const tabName = item.getAttribute('data-stab');
+    document.querySelectorAll('.settings-nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.stab').forEach(s => s.classList.remove('active'));
+    item.classList.add('active');
+    const tab = document.getElementById(`stab-${tabName}`);
+    if (tab) tab.classList.add('active');
+  });
+
+  // Invite user btn na aba de usuários de configurações
+  document.getElementById('inviteUserBtn')?.addEventListener('click', () => openModal('userModal'));
+}
+
+// ─── PIPELINE CONFIG ─────────────────────────────────────────────────────────
+window.addPipelineStage = function() {
+  const editor = document.getElementById('pipelineStagesEditor');
+  if (!editor) return;
+  const colors = ['#7B2FBE','#0984E3','#E17055','#FDCB6E','#00B894','#E91E8C','#5B8DEF'];
+  const color = colors[editor.children.length % colors.length];
+  const row = document.createElement('div');
+  row.className = 'pipeline-stage-row';
+  row.innerHTML = `<span class="stage-drag">⠿</span><div class="stage-color-dot" style="background:${color}"></div><input type="text" value="Nova Etapa" class="form-input" style="flex:1"><button class="btn-sm" style="background:#fff0ef;color:#e17055;border:none;border-radius:8px;padding:6px 10px;cursor:pointer" onclick="this.closest('.pipeline-stage-row').remove()">🗑️</button>`;
+  editor.appendChild(row);
+};
+
+window.savePipelineConfig = function() {
+  const rows = document.querySelectorAll('#pipelineStagesEditor .pipeline-stage-row input');
+  const stages = Array.from(rows).map(i => i.value.trim()).filter(Boolean);
+  if (stages.length === 0) return showAlert('Adicione pelo menos uma etapa', 'error');
+  showAlert(`Pipeline atualizado com ${stages.length} etapas!`, 'success');
+  document.getElementById('pipelineConfigModal').classList.remove('active');
+  // Recarregar pipeline com novas etapas
+  loadPipeline();
+};
+
+// ─── DEAL DETAIL ─────────────────────────────────────────────────────────────
+function openDealDetail(deal) {
+  const modal = document.getElementById('dealDetailModal');
+  if (!modal) return;
+  modal.dataset.dealId = deal.id;
+
+  document.getElementById('dealDetailTitle').textContent = deal.name;
+
+  const stageColor = { 'Prospecção': '#7B2FBE', 'Qualificação': '#0984E3', 'Proposta': '#E17055', 'Negociação': '#FDCB6E', 'Fechamento': '#00B894' };
+  const color = stageColor[deal.stage] || '#999';
+
+  document.getElementById('dealDetailBody').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+      <div class="info-box">
+        <label>Valor do Negócio</label>
+        <div class="val" style="font-size:22px;color:#7B2FBE">${formatCurrency(deal.value)}</div>
+      </div>
+      <div class="info-box">
+        <label>Etapa</label>
+        <div><span style="background:${color}22;color:${color};padding:4px 12px;border-radius:99px;font-size:13px;font-weight:700">${deal.stage}</span></div>
+      </div>
+      <div class="info-box">
+        <label>Probabilidade</label>
+        <div class="val">${deal.probability || 0}%</div>
+      </div>
+      <div class="info-box">
+        <label>Previsão de Fechamento</label>
+        <div class="val">${formatDate(deal.closeDate)}</div>
+      </div>
+    </div>
+    ${deal.contact ? `<div class="info-box" style="margin-bottom:12px"><label>Contato</label><div class="val">👤 ${deal.contact.name}</div></div>` : ''}
+    ${deal.company ? `<div class="info-box" style="margin-bottom:12px"><label>Empresa</label><div class="val">🏢 ${deal.company.name}</div></div>` : ''}
+    ${deal.owner ? `<div class="info-box" style="margin-bottom:12px"><label>Responsável</label><div class="val">🧑‍💼 ${deal.owner.name}</div></div>` : ''}
+    ${deal.description ? `<div class="info-box" style="margin-bottom:12px"><label>Descrição</label><div style="font-size:13px;color:#636e72;margin-top:4px">${deal.description}</div></div>` : ''}
+    <div style="margin-top:20px">
+      <h4 style="font-size:13px;font-weight:700;color:#636e72;margin-bottom:12px">📋 HISTÓRICO DE ATIVIDADE</h4>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:10px;background:#f8f9fa;border-radius:10px">
+          <div style="width:30px;height:30px;background:rgba(123,47,190,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">✅</div>
+          <div><div style="font-size:13px;font-weight:600">Negócio criado</div><div style="font-size:11px;color:#999">${formatDate(deal.createdAt || new Date())}</div></div>
+        </div>
+      </div>
+    </div>
+  `;
+  openModal('dealDetailModal');
+}
+window.openDealDetail = openDealDetail;
+
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 async function loadDashboardStats() {
@@ -487,40 +704,46 @@ async function deleteDeal(id) {
 }
 
 // ─── PIPELINE (KANBAN) ────────────────────────────────────────────────────────
+let pipelineStages = ['Prospecção', 'Qualificação', 'Proposta', 'Negociação', 'Fechamento'];
+
 async function loadPipeline() {
   try {
     const res = await fetch('/api/deals');
     const deals = await res.json();
-    const stages = ['Prospecção', 'Qualificação', 'Proposta', 'Negociação', 'Fechamento'];
+    allDeals = deals;
     const board = document.getElementById('kanbanBoard');
     if (!board) return;
 
     const colors = { 'Prospecção': '#7B2FBE', 'Qualificação': '#0984E3', 'Proposta': '#E17055', 'Negociação': '#FDCB6E', 'Fechamento': '#00B894' };
 
-    board.innerHTML = stages.map(stage => {
+    board.innerHTML = pipelineStages.map(stage => {
       const stageDels = deals.filter(d => d.stage === stage);
       const stageValue = stageDels.reduce((sum, d) => sum + (d.value || 0), 0);
+      const color = colors[stage] || '#7B2FBE';
       return `
-        <div class="kanban-col" data-stage="${stage}">
-          <div class="kanban-col-header">
-            <span style="color:${colors[stage]}">${stage}</span>
-            <span class="kanban-count">${stageDels.length}</span>
+        <div class="kanban-col" data-stage="${stage}" ondragover="event.preventDefault();this.querySelector('.kanban-cards').classList.add('drag-over')" ondragleave="this.querySelector('.kanban-cards').classList.remove('drag-over')" ondrop="dropDeal(event,'${stage}')">
+          <div class="kanban-col-header" style="border-bottom-color:${color}">
+            <span style="color:${color};font-size:13px;font-weight:700">${stage}</span>
+            <span class="kanban-count" style="background:${color}22;color:${color}">${stageDels.length}</span>
           </div>
-          <div style="font-size:12px;color:#999;margin-bottom:12px">${formatCurrency(stageValue)}</div>
+          <div style="font-size:12px;color:#999;padding:6px 16px 8px;font-weight:600">${formatCurrency(stageValue)}</div>
           <div class="kanban-cards" id="kanban-${stage.replace(/\s/g, '_')}">
             ${stageDels.map(d => `
-              <div class="kanban-card">
-                <div class="kanban-card-title">${d.name}</div>
-                <div class="kanban-card-value">${formatCurrency(d.value)}</div>
-                ${d.contact ? `<div class="kanban-card-meta">👤 ${d.contact.name}</div>` : ''}
-                <div style="display:flex;gap:6px;margin-top:8px">
-                  <button onclick="editDeal('${d.id}');navigateTo('pipeline')" style="border:none;background:#f5f5f5;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer">✏️ Editar</button>
-                  <button onclick="deleteDeal('${d.id}')" style="border:none;background:#fff0ef;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;color:#e17055">🗑️</button>
+              <div class="kanban-card" draggable="true" data-deal-id="${d.id}" ondragstart="dragDeal(event,'${d.id}')" onclick="openDealDetail(allDeals.find(x=>x.id==='${d.id}'))">
+                <div class="kanban-card-title" style="font-size:13px;font-weight:600;margin-bottom:5px">${d.name}</div>
+                <div class="kanban-card-value" style="font-size:15px;font-weight:800;color:${color};margin-bottom:6px">${formatCurrency(d.value)}</div>
+                ${d.contact ? `<div style="font-size:12px;color:#636e72;margin-bottom:8px">👤 ${d.contact.name}</div>` : ''}
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:11px;color:#999">${d.probability || 0}% fechamento</span>
+                  <div style="display:flex;gap:4px">
+                    <button onclick="event.stopPropagation();editDeal('${d.id}')" style="border:none;background:#f5f5f5;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer">✏️</button>
+                    <button onclick="event.stopPropagation();deleteDeal('${d.id}')" style="border:none;background:#fff0ef;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;color:#e17055">🗑️</button>
+                  </div>
                 </div>
               </div>
             `).join('')}
           </div>
-          <button onclick="openModal('dealModal')" style="width:100%;border:2px dashed #e0e0e0;background:none;border-radius:10px;padding:10px;cursor:pointer;color:#999;font-size:13px;margin-top:8px">+ Novo Negócio</button>
+          <button onclick="openNewDeal()" style="margin:8px;padding:10px;border:1.5px dashed #e0e0e0;background:none;border-radius:10px;cursor:pointer;color:#999;font-size:12.5px;width:calc(100% - 16px);font-family:inherit;transition:all 0.2s" onmouseover="this.style.borderColor='#7B2FBE';this.style.color='#7B2FBE'" onmouseout="this.style.borderColor='#e0e0e0';this.style.color='#999'">+ Novo Negócio</button>
         </div>
       `;
     }).join('');
@@ -531,6 +754,24 @@ async function loadPipeline() {
     if (sub) sub.textContent = `${deals.length} negócios · ${formatCurrency(total)} no pipeline`;
   } catch (e) { showAlert('Erro ao carregar pipeline'); }
 }
+
+// Drag & Drop Pipeline
+let draggingDealId = null;
+function dragDeal(e, id) { draggingDealId = id; e.dataTransfer.effectAllowed = 'move'; }
+async function dropDeal(e, newStage) {
+  e.preventDefault();
+  e.currentTarget.querySelector('.kanban-cards')?.classList.remove('drag-over');
+  if (!draggingDealId) return;
+  try {
+    await fetch(`/api/deals/${draggingDealId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ stage: newStage }) });
+    showAlert(`Negócio movido para ${newStage}!`, 'success');
+    loadPipeline();
+  } catch (e) { showAlert('Erro ao mover negócio', 'error'); }
+  draggingDealId = null;
+}
+window.dragDeal = dragDeal;
+window.dropDeal = dropDeal;
+window.openNewDeal = openNewDeal;
 
 // ─── ACTIVITIES ───────────────────────────────────────────────────────────────
 let allActivities = [];
@@ -680,5 +921,11 @@ window.deleteCompany = deleteCompany;
 window.completeActivity = completeActivity;
 window.deleteActivity = deleteActivity;
 window.openModal = openModal;
+window.closeModal = closeModal;
 window.navigateTo = navigateTo;
 window.openNewContact = openNewContact;
+window.openDealDetail = openDealDetail;
+window.savePipelineConfig = savePipelineConfig;
+window.addPipelineStage = addPipelineStage;
+window.openNewDeal = openNewDeal;
+window.openDealDetail = openDealDetail;

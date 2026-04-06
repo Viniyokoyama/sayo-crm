@@ -40,7 +40,7 @@
 
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
-  <div class="sidebar-logo"><img src="logo.png" alt="SAYO" class="logo-img"></div>
+  <div class="sidebar-logo"><img src="logo-purple.png" alt="SAYO" class="logo-img" style="filter: brightness(0) invert(1);"></div>
   <nav class="sidebar-nav">
     <div class="nav-section-label">PRINCIPAL</div>
     <a href="#" class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></a>
@@ -567,14 +567,72 @@
 </div>
 
 <!-- NOTIFICATION PANEL -->
-<div class="notif-panel" id="notifPanel" style="display:none">
-  <div class="notif-panel-header"><h4>Notificações</h4><button class="btn-link">Marcar todas como lidas</button></div>
-  <div class="notif-items" id="notifItems"></div>
+<div class="notif-panel" id="notifPanel">
+  <div class="notif-panel-header"><h4>🔔 Notificações</h4><button class="btn-link" id="markAllReadBtn">Marcar todas como lidas</button></div>
+  <div class="notif-items" id="notifItems">
+    <div class="notif-item unread">
+      <div class="notif-icon" style="background:#7B2FBE22;color:#7B2FBE">👥</div>
+      <div class="notif-text"><strong>Novo lead capturado</strong><p>Maria Silva entrou pelo formulário do site</p><span class="notif-time">há 5 min</span></div>
+    </div>
+    <div class="notif-item unread">
+      <div class="notif-icon" style="background:#E17055aa;color:#E17055">💼</div>
+      <div class="notif-text"><strong>Negócio atualizado</strong><p>Proposta Tech Solutions avançou para Qualificação</p><span class="notif-time">há 1h</span></div>
+    </div>
+    <div class="notif-item">
+      <div class="notif-icon" style="background:#00B89422;color:#00B894">✅</div>
+      <div class="notif-text"><strong>Tarefa concluída</strong><p>Ligação com João Santos foi concluída</p><span class="notif-time">há 2h</span></div>
+    </div>
+    <div class="notif-item">
+      <div class="notif-icon" style="background:#0984E322;color:#0984E3">📣</div>
+      <div class="notif-text"><strong>Campanha finalizada</strong><p>Newsletter de Março atingiu 68% de abertura</p><span class="notif-time">ontem</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- DEAL DETAIL MODAL -->
+<div class="modal-overlay" id="dealDetailModal">
+  <div class="modal large" style="max-width:700px">
+    <div class="modal-header">
+      <h2 id="dealDetailTitle">Detalhes do Negócio</h2>
+      <button class="modal-close" onclick="document.getElementById('dealDetailModal').classList.remove('active')">✕</button>
+    </div>
+    <div class="modal-body" id="dealDetailBody">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="document.getElementById('dealDetailModal').classList.remove('active')">Fechar</button>
+      <button class="btn-primary" id="dealDetailEditBtn">✏️ Editar Negócio</button>
+    </div>
+  </div>
+</div>
+
+<!-- PIPELINE CONFIG MODAL -->
+<div class="modal-overlay" id="pipelineConfigModal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <h2>⚙️ Configurar Etapas do Pipeline</h2>
+      <button class="modal-close" onclick="document.getElementById('pipelineConfigModal').classList.remove('active')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:#636e72;font-size:13px;margin-bottom:16px">Personalize as etapas do seu pipeline de vendas. Arraste para reordenar.</p>
+      <div id="pipelineStagesEditor">
+        <div class="pipeline-stage-row" data-stage="Prospecção"><span class="stage-drag">⠿</span><div class="stage-color-dot" style="background:#7B2FBE"></div><input type="text" value="Prospecção" class="form-input" style="flex:1"><button class="btn-sm" style="background:#fff0ef;color:#e17055;border:none;border-radius:8px;padding:6px 10px;cursor:pointer" onclick="this.closest('.pipeline-stage-row').remove()">🗑️</button></div>
+        <div class="pipeline-stage-row" data-stage="Qualificação"><span class="stage-drag">⠿</span><div class="stage-color-dot" style="background:#0984E3"></div><input type="text" value="Qualificação" class="form-input" style="flex:1"><button class="btn-sm" style="background:#fff0ef;color:#e17055;border:none;border-radius:8px;padding:6px 10px;cursor:pointer" onclick="this.closest('.pipeline-stage-row').remove()">🗑️</button></div>
+        <div class="pipeline-stage-row" data-stage="Proposta"><span class="stage-drag">⠿</span><div class="stage-color-dot" style="background:#E17055"></div><input type="text" value="Proposta" class="form-input" style="flex:1"><button class="btn-sm" style="background:#fff0ef;color:#e17055;border:none;border-radius:8px;padding:6px 10px;cursor:pointer" onclick="this.closest('.pipeline-stage-row').remove()">🗑️</button></div>
+        <div class="pipeline-stage-row" data-stage="Negociação"><span class="stage-drag">⠿</span><div class="stage-color-dot" style="background:#FDCB6E"></div><input type="text" value="Negociação" class="form-input" style="flex:1"><button class="btn-sm" style="background:#fff0ef;color:#e17055;border:none;border-radius:8px;padding:6px 10px;cursor:pointer" onclick="this.closest('.pipeline-stage-row').remove()">🗑️</button></div>
+        <div class="pipeline-stage-row" data-stage="Fechamento"><span class="stage-drag">⠿</span><div class="stage-color-dot" style="background:#00B894"></div><input type="text" value="Fechamento" class="form-input" style="flex:1"><button class="btn-sm" style="background:#fff0ef;color:#e17055;border:none;border-radius:8px;padding:6px 10px;cursor:pointer" onclick="this.closest('.pipeline-stage-row').remove()">🗑️</button></div>
+      </div>
+      <button class="btn-outline" style="margin-top:12px;width:100%" onclick="addPipelineStage()">+ Adicionar Etapa</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="document.getElementById('pipelineConfigModal').classList.remove('active')">Cancelar</button>
+      <button class="btn-primary" onclick="savePipelineConfig()">💾 Salvar Configuração</button>
+    </div>
+  </div>
 </div>
 
 <!-- TOAST CONTAINER -->
 <div class="toast-container" id="toastContainer"></div>
 
-<script src="app.js"></script>
+<script src="app.js?v=2"></script>
 </body>
 </html>
